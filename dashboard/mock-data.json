@@ -1,0 +1,37 @@
+{
+  "summary": {
+    "totalSats": 12847,
+    "totalPayments": 42,
+    "averageSats": 306,
+    "essays": { "sats": 8234, "payments": 18 },
+    "general": { "sats": 4613, "payments": 24 }
+  },
+  "byEssay": [
+    { "slug": "(footer/general)", "sats": 4613, "count": 24, "lastPayment": 1734480000 },
+    { "slug": "why-bitcoin-matters", "sats": 3500, "count": 7, "lastPayment": 1734393600 },
+    { "slug": "building-in-public", "sats": 2100, "count": 5, "lastPayment": 1734307200 },
+    { "slug": "value-for-value-model", "sats": 1544, "count": 3, "lastPayment": 1734220800 },
+    { "slug": "sovereignty-mindset", "sats": 890, "count": 2, "lastPayment": 1733961600 },
+    { "slug": "lightning-payments", "sats": 200, "count": 1, "lastPayment": 1733875200 }
+  ],
+  "byMonth": [
+    { "month": "2025-12", "sats": 5420, "count": 18 },
+    { "month": "2025-11", "sats": 4127, "count": 14 },
+    { "month": "2025-10", "sats": 3300, "count": 10 }
+  ],
+  "transactions": [
+    { "amount": 1000, "timestamp": 1734480000, "description": "example.com/essays/why-bitcoin-matters", "essay": "why-bitcoin-matters" },
+    { "amount": 500, "timestamp": 1734476400, "description": "example.com", "essay": "(footer/general)" },
+    { "amount": 250, "timestamp": 1734472800, "description": "example.com/essays/building-in-public", "essay": "building-in-public" },
+    { "amount": 100, "timestamp": 1734469200, "description": "example.com", "essay": "(footer/general)" },
+    { "amount": 777, "timestamp": 1734465600, "description": "example.com/essays/value-for-value-model", "essay": "value-for-value-model" }
+  ],
+  "btcPrice": 104250,
+  "essayTitles": {
+    "why-bitcoin-matters": "Why Bitcoin matters",
+    "building-in-public": "Building in public",
+    "value-for-value-model": "The value-for-value model",
+    "sovereignty-mindset": "The sovereignty mindset",
+    "lightning-payments": "Lightning payments explained"
+  }
+}

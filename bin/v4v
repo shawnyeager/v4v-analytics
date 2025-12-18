@@ -234,18 +234,23 @@ function buildJsonReport(transactions, options, btcPrice) {
 // Dashboard Command Functions
 // ============================================================================
 
-async function startDashboard(port) {
+async function startDashboard(port, { mock = false } = {}) {
   const express = (await import('express')).default;
 
   const app = express();
 
-  // Fetch essay titles from RSS (cached)
-  const essayTitles = await fetchEssayTitles();
-
   app.use(express.static(path.join(__dirname, '..', 'dashboard')));
 
   app.get('/api/data', async (req, res) => {
+    // Serve mock data for screenshots/demos
+    if (mock) {
+      const mockData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'dashboard', 'mock-data.json'), 'utf8'));
+      return res.json(mockData);
+    }
+
     try {
+      // Fetch essay titles from RSS (cached)
+      const essayTitles = await fetchEssayTitles();
       const data = await fetchV4VData({ usd: true });
 
       const byEssay = aggregateByEssay(data.transactions, 'sats');
@@ -447,8 +452,9 @@ program
   .command('dashboard')
   .description('Start web dashboard')
   .option('-p, --port <port>', 'Port number', '3000')
+  .option('--mock', 'Use mock data (for screenshots/demos)')
   .action(async (options) => {
-    await startDashboard(parseInt(options.port, 10));
+    await startDashboard(parseInt(options.port, 10), { mock: options.mock });
   });
 
 // Cache command
