@@ -11,7 +11,7 @@
     "report": "./bin/v4v report"
   },
   "dependencies": {
-    "@getalby/sdk": "^3.0.0",
+    "@getalby/sdk": "^7.0.0",
     "commander": "^12.0.0",
     "dotenv": "^16.0.0",
     "express": "^4.18.0",
