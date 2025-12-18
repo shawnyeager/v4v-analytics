@@ -50,6 +50,7 @@ export NWC_CONNECTION_STRING="nostr+walletconnect://..."
 |---------------------|-------------|---------|
 | `NWC_CONNECTION_STRING` | NWC connection URL (required) | - |
 | `V4V_SITE_URL` | Site URL for filtering payments (required) | - |
+| `V4V_RSS_URL` | RSS feed URL for essay titles | `https://{V4V_SITE_URL}/feed.xml` |
 | `NWC_TIMEOUT` | NWC request timeout in ms | `120000` |
 
 ## How It Works
