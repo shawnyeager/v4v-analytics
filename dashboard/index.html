@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V4V Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>V4V Dashboard</h1>
+    <div class="time-controls">
+      <button data-range="7">7d</button>
+      <button data-range="30" class="active">30d</button>
+      <button data-range="90">90d</button>
+      <button data-range="365">12mo</button>
+      <button data-range="all">All</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-cards">
+      <div class="card">
+        <div class="card-label">Total Earned</div>
+        <div class="card-value" id="total-sats">-</div>
+        <div class="card-sub" id="total-usd"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Payments</div>
+        <div class="card-value" id="total-payments">-</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Avg / Payment</div>
+        <div class="card-value" id="avg-sats">-</div>
+        <div class="card-sub" id="avg-usd"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">BTC Rate</div>
+        <div class="card-value" id="btc-price">-</div>
+      </div>
+    </section>
+
+    <section class="chart-container">
+      <h2>Weekly Trend</h2>
+      <canvas id="trend-chart"></canvas>
+    </section>
+
+    <section class="table-container">
+      <h2>By Source</h2>
+      <table id="source-table">
+        <thead>
+          <tr>
+            <th data-sort="slug">Source</th>
+            <th data-sort="sats" class="sorted desc">Sats</th>
+            <th data-sort="count">Count</th>
+            <th data-sort="lastPayment">Last Payment</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <aside class="drill-down" id="drill-down">
+      <div class="drill-down-header">
+        <h3 id="drill-down-title">Transactions</h3>
+        <button id="drill-down-close">&times;</button>
+      </div>
+      <div class="drill-down-content" id="drill-down-content"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <span id="last-refresh">Loading...</span>
+    <button id="refresh-btn">Refresh</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+node_modules/
+.v4v-cache.json
+.titles-cache.json
+.env
