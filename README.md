@@ -2,6 +2,8 @@
 
 Value for Value payment analytics CLI for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
 
+> **⚠️ Not yet standalone.** This tool requires a Lightning payment proxy that injects page URLs into invoice descriptions. A working implementation is live at shawnyeager.com and will be extracted for general-purpose use. For now, you'll need to set up your own proxy.
+
 ## Setup
 
 ```bash
@@ -47,14 +49,8 @@ export NWC_CONNECTION_STRING="nostr+walletconnect://..."
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
 | `NWC_CONNECTION_STRING` | NWC connection URL (required) | - |
-| `V4V_SITE_URL` | Site URL for filtering payments | `shawnyeager.com` |
+| `V4V_SITE_URL` | Site URL for filtering payments (required) | - |
 | `NWC_TIMEOUT` | NWC request timeout in ms | `120000` |
-
-## Prerequisites
-
-This tool filters payments by matching your site URL in the payment description. For this to work, your site needs a Lightning payment proxy that injects the page URL into invoice descriptions.
-
-**TBD:** A working implementation is live at shawnyeager.com and will be extracted for general-purpose use. For now, you'll need to set up your own (e.g., via Alby's value4value widget or a custom proxy that constructs invoices with the page URL in the memo field).
 
 ## How It Works
 
