@@ -1,6 +1,7 @@
 # V4V Analytics
 
 ![V4V Dashboard](dashboard/screenshot.png)
+*Dashboard with mock data*
 
 Value for Value payment analytics CLI for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
 
@@ -40,6 +41,7 @@ export NWC_CONNECTION_STRING="nostr+walletconnect://..."
 # Start web dashboard
 ./bin/v4v dashboard
 ./bin/v4v dashboard -p 8080         # Custom port
+./bin/v4v dashboard --mock          # Use mock data for demos
 
 # Manage cache
 ./bin/v4v cache                     # Show cache stats
