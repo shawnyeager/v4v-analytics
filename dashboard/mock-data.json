@@ -1,30 +1,260 @@
 {
-  "summary": {
-    "totalSats": 12847,
-    "totalPayments": 42,
-    "averageSats": 306,
-    "essays": { "sats": 8234, "payments": 18 },
-    "general": { "sats": 4613, "payments": 24 }
-  },
-  "byEssay": [
-    { "slug": "(footer/general)", "sats": 4613, "count": 24, "lastPayment": 1734480000 },
-    { "slug": "why-bitcoin-matters", "sats": 3500, "count": 7, "lastPayment": 1734393600 },
-    { "slug": "building-in-public", "sats": 2100, "count": 5, "lastPayment": 1734307200 },
-    { "slug": "value-for-value-model", "sats": 1544, "count": 3, "lastPayment": 1734220800 },
-    { "slug": "sovereignty-mindset", "sats": 890, "count": 2, "lastPayment": 1733961600 },
-    { "slug": "lightning-payments", "sats": 200, "count": 1, "lastPayment": 1733875200 }
-  ],
-  "byMonth": [
-    { "month": "2025-12", "sats": 5420, "count": 18 },
-    { "month": "2025-11", "sats": 4127, "count": 14 },
-    { "month": "2025-10", "sats": 3300, "count": 10 }
-  ],
+  "summary": {},
+  "byEssay": [],
+  "byMonth": [],
   "transactions": [
-    { "amount": 1000, "timestamp": 1734480000, "description": "example.com/essays/why-bitcoin-matters", "essay": "why-bitcoin-matters" },
-    { "amount": 500, "timestamp": 1734476400, "description": "example.com", "essay": "(footer/general)" },
-    { "amount": 250, "timestamp": 1734472800, "description": "example.com/essays/building-in-public", "essay": "building-in-public" },
-    { "amount": 100, "timestamp": 1734469200, "description": "example.com", "essay": "(footer/general)" },
-    { "amount": 777, "timestamp": 1734465600, "description": "example.com/essays/value-for-value-model", "essay": "value-for-value-model" }
+    {
+      "amount": 21,
+      "timestamp": 1766073915,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 50,
+      "timestamp": 1765950176,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1765894703,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1765773962,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1765690017,
+      "description": "example.com/essays/lightning-payments",
+      "essay": "lightning-payments"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1765622865,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1765531370,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1765466901,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 1000,
+      "timestamp": 1765366648,
+      "description": "example.com/essays/sovereignty-mindset",
+      "essay": "sovereignty-mindset"
+    },
+    {
+      "amount": 2100,
+      "timestamp": 1765297246,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 21,
+      "timestamp": 1765124425,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 50,
+      "timestamp": 1764999533,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1764934535,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1764846044,
+      "description": "example.com/essays/sovereignty-mindset",
+      "essay": "sovereignty-mindset"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1764774346,
+      "description": "example.com/essays/lightning-payments",
+      "essay": "lightning-payments"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1764665655,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1764577280,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1764512570,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 1000,
+      "timestamp": 1764408848,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 2100,
+      "timestamp": 1764324671,
+      "description": "example.com/essays/lightning-payments",
+      "essay": "lightning-payments"
+    },
+    {
+      "amount": 21,
+      "timestamp": 1764173503,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 50,
+      "timestamp": 1764059280,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1763983073,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1763914516,
+      "description": "example.com/essays/sovereignty-mindset",
+      "essay": "sovereignty-mindset"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1763812363,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1763712779,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1763624726,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1763536758,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 1000,
+      "timestamp": 1763459497,
+      "description": "example.com/essays/sovereignty-mindset",
+      "essay": "sovereignty-mindset"
+    },
+    {
+      "amount": 2100,
+      "timestamp": 1763361910,
+      "description": "example.com/essays/lightning-payments",
+      "essay": "lightning-payments"
+    },
+    {
+      "amount": 21,
+      "timestamp": 1763220850,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 50,
+      "timestamp": 1763130397,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1763024401,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 100,
+      "timestamp": 1762925533,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1762861427,
+      "description": "example.com/essays/lightning-payments",
+      "essay": "lightning-payments"
+    },
+    {
+      "amount": 200,
+      "timestamp": 1762787909,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1762680801,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 500,
+      "timestamp": 1762608283,
+      "description": "example.com/essays/value-for-value-model",
+      "essay": "value-for-value-model"
+    },
+    {
+      "amount": 1000,
+      "timestamp": 1762507997,
+      "description": "example.com/essays/sovereignty-mindset",
+      "essay": "sovereignty-mindset"
+    },
+    {
+      "amount": 2100,
+      "timestamp": 1762405800,
+      "description": "example.com",
+      "essay": "(footer/general)"
+    },
+    {
+      "amount": 21,
+      "timestamp": 1762253571,
+      "description": "example.com/essays/why-bitcoin-matters",
+      "essay": "why-bitcoin-matters"
+    },
+    {
+      "amount": 50,
+      "timestamp": 1762178580,
+      "description": "example.com/essays/building-in-public",
+      "essay": "building-in-public"
+    }
   ],
   "btcPrice": 104250,
   "essayTitles": {

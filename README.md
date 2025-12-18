@@ -1,5 +1,7 @@
 # V4V Analytics
 
+![V4V Dashboard](dashboard/screenshot.png)
+
 Value for Value payment analytics CLI for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
 
 > **⚠️ Not yet standalone.** This tool requires a Lightning payment proxy that injects page URLs into invoice descriptions. A working implementation is live at shawnyeager.com and will be extracted for general-purpose use. For now, you'll need to set up your own proxy.
