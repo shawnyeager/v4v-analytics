@@ -1,11 +1,12 @@
 # V4V Analytics
 
+Value for Value payment analytics and Hugo integration for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
+
 ![V4V Dashboard](dashboard/screenshot.png)
-*Dashboard with mock data*
+*CLI dashboard with mock data*
 
-Value for Value payment analytics CLI for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
-
-> **Note:** This tool requires a Lightning payment proxy that injects page URLs into invoice descriptions. A working implementation is live at shawnyeager.com and will be extracted for general-purpose use.
+![V4V Payment Page](hugo/v4v-screenshot.png)
+*Hugo payment page*
 
 ## Quick Start
 
@@ -93,13 +94,31 @@ Colored output respects the `NO_COLOR` environment variable.
 | `V4V_MAX_BATCHES` | Max transaction batches to fetch | `20` |
 | `V4V_BATCH_DELAY` | Delay between batches in ms | `300` |
 
-## How It Works
+## How the CLI Works
 
 1. Connects to your Alby Hub (or any NWC provider) via Nostr Wallet Connect
 2. Fetches incoming Lightning payments with incremental caching
 3. Filters for V4V payments (containing your site URL in description)
 4. Fetches essay titles from your site's RSS feed for friendly display
 5. Aggregates and displays analytics by essay, time period, etc.
+
+## Hugo Integration
+
+Accept V4V payments on your Hugo site deployed to Netlify. This repo includes:
+
+- **Netlify proxy** - LNURL-pay edge function + serverless functions for invoice generation
+- **Hugo template** - Payment page with amount selection and QR codes
+- **Theme-agnostic CSS** - Customizable via CSS variables
+
+```bash
+# Quick start
+cp -r proxy/netlify/* your-site/netlify/
+cp -r hugo/layouts/v4v your-site/layouts/
+cp hugo/assets/css/v4v.css your-site/assets/css/
+npm install @getalby/sdk bolt11 ws
+```
+
+See [docs/HUGO_SETUP.md](docs/HUGO_SETUP.md) for complete setup instructions.
 
 ## Development
 
