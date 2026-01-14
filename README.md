@@ -1,6 +1,6 @@
-# V4V Analytics
+# hugo-v4v
 
-Value for Value payment analytics and Hugo integration for Bitcoin Lightning payments via NWC (Nostr Wallet Connect).
+Accept Bitcoin Lightning payments on Hugo sites. Includes Netlify proxy, payment page template, and analytics CLI.
 
 ![V4V Dashboard](dashboard/screenshot.png)
 *CLI dashboard with mock data*

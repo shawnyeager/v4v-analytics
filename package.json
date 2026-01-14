@@ -1,7 +1,7 @@
 {
-  "name": "v4v-analytics",
+  "name": "hugo-v4v",
   "version": "1.0.0",
-  "description": "Value for Value payment analytics CLI",
+  "description": "Accept Bitcoin Lightning payments on Hugo sites. Includes Netlify proxy, payment page template, and analytics CLI.",
   "type": "module",
   "bin": {
     "v4v": "./bin/v4v"
