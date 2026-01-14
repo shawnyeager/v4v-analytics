@@ -1,0 +1,604 @@
+{{/*
+  V4V Payment Page Template - layouts/v4v/single.html
+  Bitcoin Lightning payment page with amount selection and QR generation
+
+  INSTALLATION:
+  1. Copy this file to your Hugo site's layouts/v4v/single.html
+  2. Copy hugo/assets/css/v4v.css to your assets/css/ folder
+  3. Include the CSS in your base template or import in your main stylesheet
+  4. Create content/v4v.md with type: v4v
+
+  CONFIGURATION:
+  Set in config.toml/hugo.toml:
+    [params]
+      v4v_site_url = "https://yoursite.com"  # Used for share links
+
+  Works for both:
+  - General /v4v/ page (no essay context)
+  - Per-essay /essay-slug/v4v/ pages (with essay context from content adapter)
+*/}}
+
+{{ define "main" }}
+{{ $siteUrl := .Site.Params.v4v_site_url | default .Site.BaseURL }}
+{{ $essaySlug := .Params.essay_slug | default "" }}
+{{ $essayTitle := .Params.essay_title | default "" }}
+{{ $hasEssay := ne $essaySlug "" }}
+
+<article class="v4v-page">
+  <div class="v4v-content">
+    <p class="v4v-intro">
+      {{ if $hasEssay }}Found value? Give value back—or <a href="#" id="share-essay">share it</a>.{{ else }}Found value? Give value back.{{ end }}
+    </p>
+
+    <!-- Amount Selection (replaced by QR when amount selected) -->
+    <div id="amount-selection" class="amount-selection">
+      <div class="amount-grid">
+        <button class="amount-btn" data-amount="500">500 sats</button>
+        <button class="amount-btn amount-btn--suggested" data-amount="1000">1,000 sats</button>
+        <button class="amount-btn" data-amount="5000">5,000 sats</button>
+        <button class="amount-btn" data-amount="10000">10,000 sats</button>
+      </div>
+
+      <div class="custom-amount-section">
+        <label for="custom-sats" class="custom-amount-label">Custom amount:</label>
+        <div class="custom-amount-field">
+          <input
+            type="text"
+            id="custom-sats"
+            class="custom-amount-input"
+            placeholder="sats"
+            inputmode="numeric"
+          />
+          <button id="generate-custom" class="custom-amount-btn" type="button">Pay</button>
+        </div>
+        <p id="validation-error" class="validation-error hidden"></p>
+      </div>
+    </div>
+
+    <!-- Error Display (card style matching QR display) -->
+    <div id="error-display" class="error-display hidden">
+      <p id="error-message" class="error-message"></p>
+      <button id="error-dismiss-btn" class="error-dismiss-btn" type="button">Try again</button>
+    </div>
+
+    <!-- QR Display (replaces amount selection) -->
+    <div id="qr-display" class="qr-display hidden">
+      <a id="qr-link" href="#" class="qr-link">
+        <div id="qr-code" class="qr-code"></div>
+      </a>
+      <div id="qr-details" class="qr-details hidden">
+        <p class="qr-hint">
+          <span class="qr-hint--mobile">Tap to open wallet or <button id="copy-invoice" class="qr-copy-link" type="button">copy invoice</button></span>
+          <span class="qr-hint--desktop">Scan with Lightning wallet or <button id="copy-invoice-desktop" class="qr-copy-link" type="button">copy invoice</button></span>
+        </p>
+        <p class="qr-amount">
+          <span id="selected-amount" class="qr-amount-value"></span> sats
+        </p>
+        <p id="polling-status" class="polling-status">Waiting for payment...</p>
+        <button id="cancel-btn" class="qr-cancel-btn" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Payment Status (hidden by default) -->
+    <div id="payment-status" class="payment-status hidden">
+      <p class="payment-check"><span id="confirmed-amount"></span> sats received</p>
+      <p class="payment-thanks">Thank you for supporting this work.</p>
+    </div>
+
+    {{ if $hasEssay }}
+    <nav class="v4v-nav">
+      <a href="/{{ $essaySlug }}/" class="v4v-back-link">&larr; Back to essay</a>
+    </nav>
+    {{ end }}
+
+    <!-- V4V Info -->
+    <details class="v4v-details">
+      <summary>New to value for value?</summary>
+      <p>
+        Value for value means no paywalls, no tracking, no platform cut. You read first, decide what the work is worth, then pay directly. Bitcoin makes this possible—no middlemen, no surveillance, just creator and reader.
+      </p>
+      <a href="https://value4value.info/" class="v4v-learn-link">How V4V works &rarr;</a>
+    </details>
+  </div>
+</article>
+
+<script type="module">
+import QRCode from 'https://esm.sh/qrcode@1.5.3';
+
+// Configuration
+const siteUrl = "{{ $siteUrl }}";
+const essaySlug = "{{ $essaySlug }}";
+const essayTitle = "{{ $essayTitle }}";
+const config = {
+  lnurlEndpoint: '/.well-known/lnurlp/sats',
+  pollInterval: 3000,
+  pollTimeout: 300000,
+  maxPollFailures: 3,
+};
+
+// State
+let state = {
+  selectedAmount: null,
+  currentInvoice: null,
+  paymentHash: null,
+  pollTimer: null,
+  startTime: null,
+  isGenerating: false,
+  maxSendable: null,
+  pollFailures: 0,
+};
+
+// Persist state to sessionStorage (survives mobile app switching)
+// Include essay slug in key so each V4V page has its own state
+const STORAGE_KEY = `v4v_payment_state_${essaySlug || 'general'}`;
+
+function savePaymentState() {
+  const persistedState = {
+    selectedAmount: state.selectedAmount,
+    currentInvoice: state.currentInvoice,
+    paymentHash: state.paymentHash,
+    startTime: state.startTime,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(persistedState));
+}
+
+function loadPaymentState() {
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load payment state:', e);
+  }
+  return null;
+}
+
+function clearPaymentState() {
+  sessionStorage.removeItem(STORAGE_KEY);
+}
+
+// DOM elements
+const elements = {
+  amountSelection: document.getElementById('amount-selection'),
+  amountBtns: document.querySelectorAll('.amount-btn'),
+  customInput: document.getElementById('custom-sats'),
+  generateBtn: document.getElementById('generate-custom'),
+  validationError: document.getElementById('validation-error'),
+  qrDisplay: document.getElementById('qr-display'),
+  qrCode: document.getElementById('qr-code'),
+  qrLink: document.getElementById('qr-link'),
+  qrDetails: document.getElementById('qr-details'),
+  copyBtns: document.querySelectorAll('.qr-copy-link'),
+  amountDisplay: document.getElementById('selected-amount'),
+  cancelBtn: document.getElementById('cancel-btn'),
+  paymentStatus: document.getElementById('payment-status'),
+  confirmedAmount: document.getElementById('confirmed-amount'),
+  errorDisplay: document.getElementById('error-display'),
+  errorMessage: document.getElementById('error-message'),
+  errorDismissBtn: document.getElementById('error-dismiss-btn'),
+  shareBtn: document.getElementById('share-essay'),
+};
+
+// Share essay URL (Web Share API with clipboard fallback)
+if (elements.shareBtn && essaySlug) {
+  const essayUrl = `${siteUrl.replace(/\/$/, '')}/${essaySlug}/`;
+
+  elements.shareBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (navigator.share) {
+      // Mobile/native share sheet
+      await navigator.share({ title: essayTitle, url: essayUrl });
+    } else {
+      // Fallback: copy URL to clipboard with visual feedback
+      await navigator.clipboard.writeText(essayUrl);
+      elements.shareBtn.textContent = 'copied';
+      setTimeout(() => elements.shareBtn.textContent = 'share it', 2000);
+    }
+  });
+}
+
+// Inline validation error (shown near input)
+function showValidationError(message) {
+  elements.validationError.textContent = message;
+  elements.validationError.classList.remove('hidden');
+}
+
+function hideValidationError() {
+  elements.validationError.classList.add('hidden');
+  elements.validationError.textContent = '';
+}
+
+// Card error (replaces amount selection, used for generation failures)
+function showError(message) {
+  elements.errorMessage.textContent = message;
+  elements.amountSelection.classList.add('hidden');
+  elements.qrDisplay.classList.add('hidden');
+  elements.errorDisplay.classList.remove('hidden');
+}
+
+function hideError() {
+  elements.errorDisplay.classList.add('hidden');
+  elements.errorMessage.textContent = '';
+  elements.amountSelection.classList.remove('hidden');
+}
+
+function getFriendlyError(error) {
+  const msg = error.message || '';
+
+  // HTTP status codes
+  if (msg.includes('404')) {
+    return 'Payment service temporarily unavailable.';
+  }
+  if (msg.match(/50[0-3]/) || msg.includes('502') || msg.includes('503')) {
+    return 'Payment service is experiencing issues.';
+  }
+
+  // Network errors
+  if (error.name === 'TypeError' || msg.includes('fetch') || msg.includes('network')) {
+    return 'Unable to connect. Check your internet connection.';
+  }
+
+  // Amount range errors - keep as-is (already user-friendly)
+  if (msg.includes('Amount must be between')) {
+    return msg;
+  }
+
+  // LNURL/Invoice errors with a reason - pass through (usually human-readable from provider)
+  if (msg && !msg.includes('request failed') && !msg.includes('error')) {
+    return msg;
+  }
+
+  // Generic fallback
+  return 'Something went wrong.';
+}
+
+async function generateInvoice(sats) {
+  try {
+    // Cache-bust to ensure fresh invoice each time
+    const cacheBust = Date.now();
+    const lnurlUrl = essaySlug
+      ? `${config.lnurlEndpoint}?essay=${encodeURIComponent(essaySlug)}&title=${encodeURIComponent(essayTitle)}&_=${cacheBust}`
+      : `${config.lnurlEndpoint}?_=${cacheBust}`;
+    const lnurlResponse = await fetch(lnurlUrl, { cache: 'no-store' });
+
+    if (!lnurlResponse.ok) {
+      throw new Error(`LNURL request failed: ${lnurlResponse.status}`);
+    }
+
+    const lnurlData = await lnurlResponse.json();
+
+    if (lnurlData.status === 'ERROR') {
+      throw new Error(lnurlData.reason || 'LNURL error');
+    }
+
+    // Store max amount for client-side validation
+    state.maxSendable = lnurlData.maxSendable / 1000;
+
+    const amount = sats * 1000;
+
+    if (amount < lnurlData.minSendable || amount > lnurlData.maxSendable) {
+      throw new Error(`Amount must be between ${lnurlData.minSendable / 1000} and ${lnurlData.maxSendable / 1000} sats`);
+    }
+
+    const callbackUrl = new URL(lnurlData.callback);
+    callbackUrl.searchParams.set('amount', amount);
+    callbackUrl.searchParams.set('_', cacheBust);
+
+    const invoiceResponse = await fetch(callbackUrl.toString(), { cache: 'no-store' });
+
+    if (!invoiceResponse.ok) {
+      throw new Error(`Invoice request failed: ${invoiceResponse.status}`);
+    }
+
+    const invoiceData = await invoiceResponse.json();
+
+    if (invoiceData.status === 'ERROR') {
+      throw new Error(invoiceData.reason || 'Invoice generation error');
+    }
+
+    return {
+      invoice: invoiceData.pr,
+      paymentHash: invoiceData.paymentHash
+    };
+
+  } catch (error) {
+    console.error('Invoice generation failed:', error);
+    showError(getFriendlyError(error));
+    return null;
+  }
+}
+
+function displayLoadingState() {
+  removeSuggestedHighlight();
+  hideValidationError();
+  elements.amountSelection.classList.add('hidden');
+  elements.qrCode.innerHTML = '<p class="qr-loading">Generating invoice...</p>';
+  elements.qrDisplay.classList.remove('hidden');
+}
+
+function handleGenerationError() {
+  // Error display is handled by showError(), just reset state
+  state.isGenerating = false;
+}
+
+async function renderQRCode(invoice) {
+  elements.qrCode.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  elements.qrCode.appendChild(canvas);
+
+  await QRCode.toCanvas(canvas, invoice.toUpperCase(), {
+    width: 300,
+    margin: 2,
+    color: { dark: '#000000', light: '#FFFFFF' },
+    errorCorrectionLevel: 'M'
+  });
+}
+
+function displayQRSuccess(sats, invoice) {
+  elements.amountDisplay.textContent = sats.toLocaleString();
+  elements.qrLink.href = `lightning:${invoice}`;
+  elements.qrDetails.classList.remove('hidden');
+  state.isGenerating = false;
+  startPaymentPolling();
+}
+
+async function showQR(sats) {
+  if (state.isGenerating) return;
+  state.isGenerating = true;
+  state.selectedAmount = sats;
+
+  displayLoadingState();
+
+  const result = await generateInvoice(sats);
+  if (!result) {
+    handleGenerationError();
+    return;
+  }
+
+  state.currentInvoice = result.invoice;
+  state.paymentHash = result.paymentHash;
+
+  try {
+    await renderQRCode(result.invoice);
+  } catch (error) {
+    console.error('QR generation failed:', error);
+    elements.qrCode.innerHTML = '<p class="qr-loading">QR code generation failed</p>';
+    handleGenerationError();
+    return;
+  }
+
+  displayQRSuccess(sats, result.invoice);
+}
+
+function startPaymentPolling() {
+  if (!state.startTime) {
+    state.startTime = Date.now();
+  }
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+  }
+
+  if (!state.paymentHash) {
+    console.warn('No payment hash available for polling');
+    return;
+  }
+
+  // Persist state for mobile app switching
+  savePaymentState();
+
+  state.pollTimer = setInterval(async () => {
+    // Stop polling after timeout
+    if (Date.now() - state.startTime > config.pollTimeout) {
+      stopPaymentPolling();
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (state.paymentHash) params.set('hash', state.paymentHash);
+      if (state.currentInvoice) params.set('invoice', state.currentInvoice);
+      const response = await fetch(`/invoice-status?${params.toString()}`);
+      const data = await response.json();
+
+      state.pollFailures = 0; // Reset on successful response
+      if (data.paid) {
+        stopPaymentPolling();
+        showPaymentConfirmation();
+      }
+    } catch (error) {
+      console.error('Payment status check failed:', error);
+      state.pollFailures++;
+      if (state.pollFailures >= config.maxPollFailures) {
+        showError('Payment check failed. Retrying...');
+        state.pollFailures = 0;
+      }
+    }
+  }, config.pollInterval);
+}
+
+function showPaymentConfirmation() {
+  clearPaymentState();
+  elements.confirmedAmount.textContent = state.selectedAmount.toLocaleString();
+  elements.qrDisplay.classList.add('hidden');
+  elements.paymentStatus.classList.remove('hidden');
+}
+
+function stopPaymentPolling() {
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+  }
+}
+
+function resetState() {
+  clearPaymentState();
+  state.selectedAmount = null;
+  state.currentInvoice = null;
+  state.paymentHash = null;
+  state.startTime = null;
+  state.isGenerating = false;
+  state.maxSendable = null;
+  state.pollFailures = 0;
+}
+
+function setPaymentControlsDisabled(disabled) {
+  elements.amountBtns.forEach(btn => btn.disabled = disabled);
+  elements.customInput.disabled = disabled;
+  elements.generateBtn.disabled = disabled;
+}
+
+function resetToAmountSelection() {
+  stopPaymentPolling();
+  resetState();
+  hideValidationError();
+  elements.qrDisplay.classList.add('hidden');
+  elements.qrDetails.classList.add('hidden');
+  elements.paymentStatus.classList.add('hidden');
+  elements.errorDisplay.classList.add('hidden');
+  elements.amountSelection.classList.remove('hidden');
+  elements.customInput.value = '';
+}
+
+function parseAmount(value) {
+  const stripped = value.replace(/,/g, '');
+  const parsed = parseInt(stripped, 10);
+  if (isNaN(parsed) || parsed <= 0 || parsed > Number.MAX_SAFE_INTEGER) {
+    return null;
+  }
+  return parsed;
+}
+
+elements.amountBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const amount = parseInt(btn.dataset.amount, 10);
+    showQR(amount);
+  });
+});
+
+elements.generateBtn.addEventListener('click', () => {
+  hideValidationError();
+  const amount = parseAmount(elements.customInput.value);
+  if (amount === null) {
+    showValidationError('Please enter a valid amount in satoshis');
+    elements.customInput.focus();
+    return;
+  }
+  // Client-side validation against max amount (if known)
+  if (state.maxSendable && amount > state.maxSendable) {
+    showValidationError(`Amount cannot exceed ${state.maxSendable.toLocaleString()} sats`);
+    elements.customInput.focus();
+    return;
+  }
+  showQR(amount);
+});
+
+elements.customInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    elements.generateBtn.click();
+  }
+});
+
+elements.customInput.addEventListener('input', (e) => {
+  const raw = e.target.value.replace(/[^\d]/g, '');
+  if (!raw) {
+    e.target.value = '';
+    return;
+  }
+  e.target.value = parseInt(raw, 10).toLocaleString();
+});
+
+// Remove suggested highlight on actual selection (not hover)
+function removeSuggestedHighlight() {
+  document.querySelector('.amount-btn--suggested')?.classList.remove('amount-btn--suggested');
+}
+
+elements.copyBtns.forEach(btn => {
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(state.currentInvoice);
+      const originalText = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(() => btn.textContent = originalText, 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  });
+});
+
+elements.cancelBtn.addEventListener('click', () => {
+  resetToAmountSelection();
+});
+
+elements.errorDismissBtn.addEventListener('click', () => {
+  hideError();
+});
+
+window.addEventListener('beforeunload', () => {
+  stopPaymentPolling();
+});
+
+// Pause polling when tab is hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopPaymentPolling();
+  } else if (state.paymentHash && !state.pollTimer) {
+    // Resume polling if we have an active invoice
+    startPaymentPolling();
+  }
+});
+
+// Restore state on page load (for mobile app switching)
+(async function restorePaymentState() {
+  const saved = loadPaymentState();
+  if (!saved || !saved.paymentHash) {
+    // No saved state - ensure clean slate
+    clearPaymentState();
+    return;
+  }
+
+  // Check if the saved state has timed out
+  const elapsed = Date.now() - saved.startTime;
+  if (elapsed > config.pollTimeout) {
+    clearPaymentState();
+    return;
+  }
+
+  // Restore state
+  state.selectedAmount = saved.selectedAmount;
+  state.currentInvoice = saved.currentInvoice;
+  state.paymentHash = saved.paymentHash;
+  state.startTime = saved.startTime;
+
+  // Show checking UI
+  elements.amountSelection.classList.add('hidden');
+  elements.qrCode.innerHTML = '<p class="qr-loading">Checking payment...</p>';
+  elements.qrDetails.classList.add('hidden');
+  elements.qrDisplay.classList.remove('hidden');
+
+  // Check if already paid before resuming
+  try {
+    const params = new URLSearchParams();
+    params.set('hash', saved.paymentHash);
+    params.set('invoice', saved.currentInvoice);
+    const response = await fetch(`/invoice-status?${params.toString()}`);
+    const data = await response.json();
+
+    if (data.paid) {
+      showPaymentConfirmation();
+      return;
+    }
+  } catch (e) {
+    console.error('Payment check failed:', e);
+  }
+
+  // Not paid yet - restore full UI and resume polling
+  elements.amountDisplay.textContent = saved.selectedAmount.toLocaleString();
+  elements.qrLink.href = `lightning:${saved.currentInvoice}`;
+  elements.qrCode.innerHTML = '<p class="qr-loading polling">Waiting for payment...</p>';
+  elements.qrDetails.classList.remove('hidden');
+  startPaymentPolling();
+})();
+</script>
+{{ end }}

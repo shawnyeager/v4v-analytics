@@ -1,0 +1,39 @@
+{{/*
+  Content Adapter: Generate a /{slug}/v4v/ page for each content item
+  This enables content-specific V4V pages without restructuring into page bundles
+
+  INSTALLATION:
+  1. Copy this file to your Hugo site's content/_content.gotmpl
+  2. Create a data/essays.json file with your content items:
+     [
+       { "slug": "my-article", "title": "My Article Title" },
+       { "slug": "another-post", "title": "Another Post" }
+     ]
+  3. Each entry will generate a /my-article/v4v/ payment page
+
+  URL structure: /your-slug/v4v/
+
+  NOTE: Uses flat path "v4v-{slug}" to avoid Hugo creating intermediate branch
+  pages that conflict with content permalinks. The "url" key overrides output location.
+
+  CUSTOMIZATION:
+  - Modify the data source path to match your content structure
+  - Adjust the title/description format as needed
+*/}}
+{{ range site.Data.essays }}
+  {{ $page := dict
+    "path" (printf "v4v-%s" .slug)
+    "url" (printf "/%s/v4v/" .slug)
+    "title" (printf "Support this work | %s" .title)
+    "description" "Support this content with Bitcoin."
+    "kind" "page"
+    "type" "v4v"
+    "params" (dict
+      "essay_title" .title
+      "essay_slug" .slug
+      "list" false
+      "sitemap_disable" true
+    )
+  }}
+  {{ $.AddPage $page }}
+{{ end }}

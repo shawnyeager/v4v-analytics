@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "my-first-post",
+    "title": "My First Post"
+  },
+  {
+    "slug": "another-article",
+    "title": "Another Article About Bitcoin"
+  },
+  {
+    "slug": "deep-dive-lightning",
+    "title": "A Deep Dive into Lightning Network"
+  }
+]
