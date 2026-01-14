@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "./bin/v4v dashboard",
-    "report": "./bin/v4v report"
+    "report": "./bin/v4v report",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@getalby/sdk": "^7.0.0",
