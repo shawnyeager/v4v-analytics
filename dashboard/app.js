@@ -18,7 +18,9 @@ const elements = {
   avgSats: document.getElementById('avg-sats'),
   avgUsd: document.getElementById('avg-usd'),
   btcPrice: document.getElementById('btc-price'),
-  sourceTableBody: document.querySelector('#source-table tbody'),
+  sourceTableBody: document.getElementById('table-body'),
+  chartSkeleton: document.getElementById('chart-skeleton'),
+  chartCanvas: document.getElementById('trend-chart'),
   drillDown: document.getElementById('drill-down'),
   drillDownTitle: document.getElementById('drill-down-title'),
   drillDownContent: document.getElementById('drill-down-content'),
@@ -27,7 +29,58 @@ const elements = {
   refreshBtn: document.getElementById('refresh-btn'),
 };
 
-// Utility functions
+// ============================================
+// URL State Management
+// ============================================
+
+function readUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  
+  const range = params.get('range');
+  if (range && ['7', '30', '90', '365', 'all'].includes(range)) {
+    selectedRange = range;
+  }
+  
+  const sort = params.get('sort');
+  if (sort && ['slug', 'sats', 'count', 'lastPayment'].includes(sort)) {
+    sortColumn = sort;
+  }
+  
+  const dir = params.get('dir');
+  if (dir && ['asc', 'desc'].includes(dir)) {
+    sortDirection = dir;
+  }
+  
+  // Update UI to match state
+  document.querySelectorAll('.time-controls button').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.range === selectedRange);
+  });
+}
+
+function updateUrlState() {
+  const params = new URLSearchParams();
+  
+  if (selectedRange !== '30') {
+    params.set('range', selectedRange);
+  }
+  if (sortColumn !== 'sats') {
+    params.set('sort', sortColumn);
+  }
+  if (sortDirection !== 'desc') {
+    params.set('dir', sortDirection);
+  }
+  
+  const newUrl = params.toString() 
+    ? `${window.location.pathname}?${params.toString()}`
+    : window.location.pathname;
+  
+  history.replaceState(null, '', newUrl);
+}
+
+// ============================================
+// Utility Functions
+// ============================================
+
 function formatNumber(num) {
   return num.toLocaleString();
 }
@@ -51,10 +104,13 @@ function formatDateTime(timestamp) {
 function getSourceName(slug) {
   if (slug === '(footer/general)') return 'Footer';
   if (!data?.essayTitles) return slug;
-  return data.essayTitles[slug] || slug;
+  return data.essayTitles[slug] || data.essayTitles[`essays/${slug}`] || slug;
 }
 
-// Filter transactions by date range
+// ============================================
+// Data Processing
+// ============================================
+
 function filterByRange(transactions, range) {
   if (range === 'all') return transactions;
 
@@ -68,7 +124,6 @@ function filterByRange(transactions, range) {
   });
 }
 
-// Recalculate summary for filtered transactions
 function calculateSummary(transactions, btcPrice) {
   const generalTxs = transactions.filter((tx) => tx.essay === '(footer/general)');
 
@@ -92,7 +147,6 @@ function calculateSummary(transactions, btcPrice) {
   };
 }
 
-// Aggregate transactions by source (essays + footer)
 function aggregateBySource(transactions) {
   const bySource = new Map();
 
@@ -115,27 +169,23 @@ function aggregateBySource(transactions) {
   }));
 }
 
-// Aggregate transactions by week (fills in gaps with zeros)
 function aggregateByWeek(transactions, range) {
   const byWeek = new Map();
 
-  // Get Monday of current week
   const now = new Date();
   const currentDay = now.getDay();
   const currentMonday = new Date(now);
   currentMonday.setDate(now.getDate() - currentDay + (currentDay === 0 ? -6 : 1));
   currentMonday.setHours(0, 0, 0, 0);
 
-  // Determine number of weeks based on range
   let numWeeks;
   if (range === 'all') {
-    numWeeks = 52; // Show up to a year for "all"
+    numWeeks = 52;
   } else {
     const days = parseInt(range, 10);
     numWeeks = Math.ceil(days / 7);
   }
 
-  // Create weeks with zero values
   for (let i = numWeeks - 1; i >= 0; i--) {
     const weekStart = new Date(currentMonday);
     weekStart.setDate(currentMonday.getDate() - i * 7);
@@ -143,7 +193,6 @@ function aggregateByWeek(transactions, range) {
     byWeek.set(key, { sats: 0, count: 0 });
   }
 
-  // Add transaction data
   for (const tx of transactions) {
     if (!tx.timestamp) continue;
     const date = new Date(tx.timestamp * 1000);
@@ -160,13 +209,11 @@ function aggregateByWeek(transactions, range) {
     }
   }
 
-  // Sort by date ascending
   return [...byWeek.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([week, d]) => ({ week, sats: d.sats, count: d.count }));
 }
 
-// Sort source data
 function sortSourceData(sourceData) {
   const sorted = [...sourceData];
   sorted.sort((a, b) => {
@@ -186,7 +233,10 @@ function sortSourceData(sourceData) {
   return sorted;
 }
 
-// Update summary cards
+// ============================================
+// UI Updates
+// ============================================
+
 function updateSummary(summary, btcPrice) {
   elements.totalSats.textContent = `${formatNumber(summary.totalSats)} sats`;
   elements.totalUsd.textContent = summary.totalUsd ? formatUsd(summary.totalUsd) : '';
@@ -196,10 +246,12 @@ function updateSummary(summary, btcPrice) {
   elements.btcPrice.textContent = btcPrice ? `$${formatNumber(btcPrice)}` : 'N/A';
 }
 
-// Update chart
 function updateChart(weeklyData) {
-  const ctx = document.getElementById('trend-chart').getContext('2d');
-
+  // Hide skeleton, show canvas
+  elements.chartSkeleton.style.display = 'none';
+  elements.chartCanvas.style.display = 'block';
+  
+  const ctx = elements.chartCanvas.getContext('2d');
   const labels = weeklyData.map((d) => d.week);
   const values = weeklyData.map((d) => d.sats);
 
@@ -244,7 +296,7 @@ function updateChart(weeklyData) {
         scales: {
           x: {
             grid: { color: '#3a3a3a' },
-            ticks: { color: '#a0a0a0' },
+            ticks: { color: '#a0a0a0', maxRotation: 45 },
           },
           y: {
             grid: { color: '#3a3a3a' },
@@ -259,7 +311,6 @@ function updateChart(weeklyData) {
   }
 }
 
-// Update source table
 function updateTable(sourceData) {
   const sorted = sortSourceData(sourceData);
 
@@ -286,7 +337,6 @@ function updateTable(sourceData) {
   });
 }
 
-// Update drill-down panel
 function updateDrillDown(slug, transactions) {
   const filtered = transactions.filter((tx) => tx.essay === slug);
 
@@ -306,7 +356,6 @@ function updateDrillDown(slug, transactions) {
   elements.drillDown.classList.add('open');
 }
 
-// Close drill-down
 function closeDrillDown() {
   elements.drillDown.classList.remove('open');
   selectedEssay = null;
@@ -315,31 +364,35 @@ function closeDrillDown() {
   });
 }
 
-// Render all data
+// ============================================
+// Main Render
+// ============================================
+
 function render() {
   if (!data) return;
 
-  // Filter transactions by selected range
   const filteredTx = filterByRange(data.transactions, selectedRange);
-
-  // Calculate summary for filtered data
   const summary = calculateSummary(filteredTx, data.btcPrice);
   updateSummary(summary, data.btcPrice);
 
-  // Aggregate by week and source
   const weeklyData = aggregateByWeek(filteredTx, selectedRange);
   const sourceData = aggregateBySource(filteredTx);
 
   updateChart(weeklyData);
   updateTable(sourceData);
 
-  // Update drill-down if open
   if (selectedEssay) {
     updateDrillDown(selectedEssay, filteredTx);
   }
+  
+  // Update URL with current state
+  updateUrlState();
 }
 
-// Fetch data from API
+// ============================================
+// Data Fetching
+// ============================================
+
 async function fetchData() {
   elements.refreshBtn.disabled = true;
   document.body.classList.add('loading');
@@ -361,7 +414,10 @@ async function fetchData() {
   }
 }
 
-// Event listeners
+// ============================================
+// Event Listeners
+// ============================================
+
 document.querySelectorAll('.time-controls button').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.time-controls button').forEach((b) => b.classList.remove('active'));
@@ -386,7 +442,7 @@ document.querySelectorAll('#source-table th').forEach((th) => {
 
 elements.sourceTableBody.addEventListener('click', (e) => {
   const row = e.target.closest('tr');
-  if (!row) return;
+  if (!row || !row.dataset.slug) return;
 
   const slug = row.dataset.slug;
   if (selectedEssay === slug) {
@@ -402,15 +458,25 @@ elements.drillDownClose.addEventListener('click', closeDrillDown);
 
 elements.refreshBtn.addEventListener('click', fetchData);
 
+// Handle browser back/forward
+window.addEventListener('popstate', () => {
+  readUrlState();
+  if (data) render();
+});
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeDrillDown();
   }
-  if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+  if (e.key === 'r' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
     fetchData();
   }
 });
 
-// Initial load
+// ============================================
+// Initialization
+// ============================================
+
+readUrlState();
 fetchData();

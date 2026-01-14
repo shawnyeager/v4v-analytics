@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="loading">
   <header>
     <h1>V4V Dashboard</h1>
     <div class="time-controls">
@@ -24,27 +24,40 @@
     <section class="summary-cards">
       <div class="card">
         <div class="card-label">Total Earned</div>
-        <div class="card-value" id="total-sats">-</div>
-        <div class="card-sub" id="total-usd"></div>
+        <div class="card-value" id="total-sats">
+          <span class="skeleton skeleton-text"></span>
+        </div>
+        <div class="card-sub" id="total-usd">
+          <span class="skeleton skeleton-text-sm"></span>
+        </div>
       </div>
       <div class="card">
         <div class="card-label">Payments</div>
-        <div class="card-value" id="total-payments">-</div>
+        <div class="card-value" id="total-payments">
+          <span class="skeleton skeleton-text"></span>
+        </div>
       </div>
       <div class="card">
         <div class="card-label">Avg / Payment</div>
-        <div class="card-value" id="avg-sats">-</div>
-        <div class="card-sub" id="avg-usd"></div>
+        <div class="card-value" id="avg-sats">
+          <span class="skeleton skeleton-text"></span>
+        </div>
+        <div class="card-sub" id="avg-usd">
+          <span class="skeleton skeleton-text-sm"></span>
+        </div>
       </div>
       <div class="card">
         <div class="card-label">BTC Price</div>
-        <div class="card-value" id="btc-price">-</div>
+        <div class="card-value" id="btc-price">
+          <span class="skeleton skeleton-text"></span>
+        </div>
       </div>
     </section>
 
     <section class="chart-container">
       <h2>Weekly Trend</h2>
-      <canvas id="trend-chart"></canvas>
+      <div id="chart-skeleton" class="skeleton skeleton-chart"></div>
+      <canvas id="trend-chart" style="display: none;"></canvas>
     </section>
 
     <section class="table-container">
@@ -58,7 +71,14 @@
             <th data-sort="lastPayment">Last Payment</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="table-body">
+          <!-- Skeleton rows -->
+          <tr class="skeleton-row"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span></tr>
+          <tr class="skeleton-row"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span></tr>
+          <tr class="skeleton-row"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span></tr>
+          <tr class="skeleton-row"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span></tr>
+          <tr class="skeleton-row"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span></tr>
+        </tbody>
       </table>
     </section>
 

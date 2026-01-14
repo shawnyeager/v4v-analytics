@@ -8,11 +8,26 @@ import { program } from 'commander';
 import { reportCommand } from '../lib/commands/report.js';
 import { dashboardCommand } from '../lib/commands/dashboard.js';
 import { cacheCommand } from '../lib/commands/cache.js';
+import { initCommand } from '../lib/commands/init.js';
+import { statusCommand } from '../lib/commands/status.js';
 
 program
   .name('v4v')
   .description('Value for Value payment analytics')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--no-color', 'Disable colored output');
+
+// Init command
+program
+  .command('init')
+  .description('Interactive setup wizard')
+  .action(initCommand);
+
+// Status command
+program
+  .command('status')
+  .description('Show connection status and configuration')
+  .action(statusCommand);
 
 // Report command
 program
@@ -22,11 +37,12 @@ program
   .option('--time-series [period]', 'Show time series (daily, weekly, monthly)', 'monthly')
   .option('--from <date>', 'Start date (YYYY-MM-DD)')
   .option('--to <date>', 'End date (YYYY-MM-DD)')
+  .option('--since <duration>', 'Relative date (e.g., 7d, 2w, 1m, 3mo, 1y)')
   .option('--top <n>', 'Limit to top N essays', parseInt)
   .option('--sort <by>', 'Sort essays by: sats, count, recent (default: sats)')
   .option('--usd', 'Show USD values (fetches current BTC price)')
   .option('--compare', 'Compare current period vs previous period')
-  .option('--format <type>', 'Output format: text, json (default: text)')
+  .option('--format <type>', 'Output format: text, json, csv (default: text)')
   .option('--export <filename>', 'Export to CSV file')
   .action(reportCommand);
 

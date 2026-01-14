@@ -43,6 +43,7 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
+  padding-bottom: 60px;
 }
 
 /* Header */
@@ -52,6 +53,8 @@ header {
   align-items: center;
   padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: var(--space-md);
 }
 
 header h1 {
@@ -63,6 +66,7 @@ header h1 {
 .time-controls {
   display: flex;
   gap: var(--space-xs);
+  flex-wrap: wrap;
 }
 
 .time-controls button {
@@ -157,6 +161,7 @@ main {
   border-radius: var(--radius-md);
   padding: var(--space-lg);
   margin-bottom: var(--space-2xl);
+  overflow-x: auto;
 }
 
 .table-container h2 {
@@ -183,6 +188,7 @@ th {
   font-size: 0.875rem;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
 }
 
 th:hover {
@@ -255,6 +261,8 @@ td:first-child {
   font-size: 1rem;
   font-weight: 500;
   color: var(--tangerine);
+  word-break: break-word;
+  padding-right: var(--space-md);
 }
 
 .drill-down-header button {
@@ -264,6 +272,7 @@ td:first-child {
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .drill-down-header button:hover {
@@ -339,13 +348,200 @@ footer button:disabled {
   cursor: not-allowed;
 }
 
-/* Loading state */
-.loading {
-  opacity: 0.5;
-  pointer-events: none;
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--border-color) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
 }
 
-/* Add bottom padding for fixed footer */
-body {
-  padding-bottom: 60px;
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 1.75rem;
+  width: 80%;
+}
+
+.skeleton-text-sm {
+  height: 0.875rem;
+  width: 50%;
+  margin-top: var(--space-xs);
+}
+
+.skeleton-row {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-row > span {
+  height: 1rem;
+}
+
+.skeleton-row > span:nth-child(1) { width: 40%; }
+.skeleton-row > span:nth-child(2) { width: 20%; }
+.skeleton-row > span:nth-child(3) { width: 15%; }
+.skeleton-row > span:nth-child(4) { width: 25%; }
+
+.skeleton-chart {
+  height: 200px;
+  width: 100%;
+}
+
+/* Loading state */
+body.loading .card-value,
+body.loading .card-sub {
+  color: transparent;
+}
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Header */
+  header {
+    padding: var(--space-md);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .time-controls {
+    justify-content: center;
+  }
+
+  .time-controls button {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  /* Main content */
+  main {
+    padding: var(--space-md);
+  }
+
+  /* Summary cards - 2 column grid on mobile */
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .card {
+    padding: var(--space-md);
+  }
+
+  .card-label {
+    font-size: 0.75rem;
+  }
+
+  .card-value {
+    font-size: 1.25rem;
+  }
+
+  .card-sub {
+    font-size: 0.75rem;
+  }
+
+  /* Chart */
+  .chart-container {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .chart-container h2 {
+    font-size: 0.875rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .chart-container canvas {
+    max-height: 200px;
+  }
+
+  /* Table */
+  .table-container {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .table-container h2 {
+    font-size: 0.875rem;
+    margin-bottom: var(--space-md);
+  }
+
+  th, td {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  /* Hide last payment column on mobile */
+  th:nth-child(4),
+  td:nth-child(4) {
+    display: none;
+  }
+
+  /* Drill-down panel - full screen overlay on mobile */
+  .drill-down {
+    width: 100%;
+    right: -100%;
+  }
+
+  .drill-down.open {
+    right: 0;
+  }
+
+  .drill-down-header {
+    padding: var(--space-md);
+  }
+
+  .drill-down-header h3 {
+    font-size: 0.875rem;
+  }
+
+  /* Footer */
+  footer {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  footer span {
+    font-size: 0.75rem;
+  }
+
+  footer button {
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.75rem;
+  }
+
+  /* Adjust body padding for smaller footer */
+  body {
+    padding-bottom: 50px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 400px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .time-controls button {
+    flex: 1;
+    min-width: 0;
+  }
 }
