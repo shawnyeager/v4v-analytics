@@ -71,7 +71,15 @@ Dashboard features:
 ```bash
 ./bin/v4v cache                     # Show cache stats
 ./bin/v4v cache --clear             # Clear cache
+./bin/v4v cache --rebuild           # Clear and fetch all transactions fresh
 ```
+
+**Important:** The CLI caches transactions locally and only fetches new ones on subsequent runs. If you're missing older payments, run `--rebuild` to fetch your complete transaction history.
+
+Use `--rebuild` when:
+- Payments you know exist aren't showing up in reports
+- You've cleared or corrupted the cache
+- You want to ensure you have complete data
 
 ## CLI Options
 
@@ -91,16 +99,19 @@ Colored output respects the `NO_COLOR` environment variable.
 | `V4V_SITE_URL` | Site URL for filtering payments (required) | - |
 | `V4V_RSS_URL` | RSS feed URL for essay titles | `https://{site}/feed.xml` |
 | `NWC_TIMEOUT` | NWC request timeout in ms | `120000` |
-| `V4V_MAX_BATCHES` | Max transaction batches to fetch | `20` |
+| `V4V_MAX_BATCHES` | Max transaction batches to fetch (~10 tx/batch) | `100` |
 | `V4V_BATCH_DELAY` | Delay between batches in ms | `300` |
 
 ## How the CLI Works
 
 1. Connects to your Alby Hub (or any NWC provider) via Nostr Wallet Connect
-2. Fetches incoming Lightning payments with incremental caching
-3. Filters for V4V payments (containing your site URL in description)
-4. Fetches essay titles from your site's RSS feed for friendly display
-5. Aggregates and displays analytics by essay, time period, etc.
+2. Fetches incoming Lightning payments and caches them locally (`.v4v-cache.json`)
+3. On subsequent runs, only fetches transactions newer than the cache
+4. Filters for V4V payments (containing your site URL in description)
+5. Fetches essay titles from your site's RSS feed for friendly display
+6. Aggregates and displays analytics by essay, time period, etc.
+
+**Note:** If you have many non-V4V transactions (Nostr zaps, podcast streaming, etc.), they fill up the cache but are filtered out of reports. Use `v4v cache --rebuild` to ensure complete history if payments seem missing.
 
 ## Hugo Integration
 

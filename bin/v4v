@@ -5,7 +5,7 @@
  */
 
 // Setup WebSocket polyfill once
-import './lib/nwc-polyfill.js';
+import '../lib/nwc-polyfill.js';
 
 import { program } from 'commander';
 import { reportCommand } from '../lib/commands/report.js';
@@ -62,6 +62,7 @@ program
   .command('cache')
   .description('Manage transaction cache')
   .option('--clear', 'Clear cached transactions')
+  .option('--rebuild', 'Clear and fetch all transactions fresh')
   .option('--show', 'Show cache statistics')
   .action(cacheCommand);
 
