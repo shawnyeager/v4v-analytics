@@ -4,6 +4,9 @@
  * Unified CLI for reports, dashboard, and cache management
  */
 
+// Setup WebSocket polyfill once
+import './lib/nwc-polyfill.js';
+
 import { program } from 'commander';
 import { reportCommand } from '../lib/commands/report.js';
 import { dashboardCommand } from '../lib/commands/dashboard.js';
