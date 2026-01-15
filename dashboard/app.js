@@ -2,6 +2,12 @@
  * V4V Dashboard Frontend
  */
 
+// Constants
+const MILLISATS_PER_SAT = 1000;
+const SATS_PER_BTC = 100_000_000;
+const MAX_WEEKS_FOR_ALL_TIME = 52;
+const FOOTER_SLUG = '(footer/general)';
+
 // State
 let data = null;
 let chart = null;
@@ -102,7 +108,7 @@ function formatDateTime(timestamp) {
 }
 
 function getSourceName(slug) {
-  if (slug === '(footer/general)') return 'Footer';
+  if (slug === FOOTER_SLUG) return 'Footer';
   if (!data?.essayTitles) return slug;
   return data.essayTitles[slug] || data.essayTitles[`essays/${slug}`] || slug;
 }
@@ -125,7 +131,7 @@ function filterByRange(transactions, range) {
 }
 
 function calculateSummary(transactions, btcPrice) {
-  const generalTxs = transactions.filter((tx) => tx.essay === '(footer/general)');
+  const generalTxs = transactions.filter((tx) => tx.essay === FOOTER_SLUG);
 
   const totalSats = transactions.reduce((sum, tx) => sum + tx.amount, 0);
   const totalPayments = transactions.length;
@@ -139,8 +145,8 @@ function calculateSummary(transactions, btcPrice) {
     totalSats,
     totalPayments,
     avgSats,
-    totalUsd: btcPrice ? (totalSats / 100_000_000) * btcPrice : null,
-    avgUsd: btcPrice ? (avgSats / 100_000_000) * btcPrice : null,
+    totalUsd: btcPrice ? (totalSats / SATS_PER_BTC) * btcPrice : null,
+    avgUsd: btcPrice ? (avgSats / SATS_PER_BTC) * btcPrice : null,
     generalSats,
     generalCount: generalTxs.length,
     generalLastPayment,
@@ -180,7 +186,7 @@ function aggregateByWeek(transactions, range) {
 
   let numWeeks;
   if (range === 'all') {
-    numWeeks = 52;
+    numWeeks = MAX_WEEKS_FOR_ALL_TIME;
   } else {
     const days = parseInt(range, 10);
     numWeeks = Math.ceil(days / 7);
@@ -340,7 +346,7 @@ function updateTable(sourceData) {
 function updateDrillDown(slug, transactions) {
   const filtered = transactions.filter((tx) => tx.essay === slug);
 
-  elements.drillDownTitle.textContent = getSourceName(slug);
+  elements.drillDownTitle.textContent = slug === FOOTER_SLUG ? 'Footer' : getSourceName(slug);
   elements.drillDownContent.innerHTML = filtered
     .sort((a, b) => b.timestamp - a.timestamp)
     .map(
