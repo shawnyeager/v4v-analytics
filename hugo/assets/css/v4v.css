@@ -309,6 +309,7 @@
   margin-bottom: var(--v4v-space-xl);
   transition: background-color var(--v4v-transition);
   animation: v4v-fadeIn var(--v4v-transition) ease-out;
+  position: relative;
 }
 
 @keyframes v4v-fadeIn {
@@ -342,6 +343,20 @@
 @keyframes v4v-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* Center loading text in full card during loading state */
+.qr-display:has(.qr-details--pending) .qr-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Details always rendered, invisible until QR ready */
+.qr-details--pending {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .polling-status {
