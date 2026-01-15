@@ -1,18 +1,19 @@
 /**
- * Invoice Status Endpoint - Checks Payment Status
- * 
- * Polls for payment confirmation via NWC.
- * 
+ * Invoice Status Endpoint (Edge Function)
+ *
+ * Checks if a Lightning invoice has been paid.
+ * Used by the frontend to poll for payment confirmation.
+ *
  * Environment variables:
  * - NWC_CONNECTION_STRING: Your NWC connection URL (required)
+ * - NTFY_TOPIC: Your ntfy.sh topic name (optional, for failure alerts)
  */
 
-import type { Context, Config } from "@netlify/functions";
-import { errorResponse, jsonResponse } from "./_shared/responses.ts";
+import type { Config } from "@netlify/edge-functions";
+import { errorResponse, jsonResponse, alertFailure } from "./_shared/config.ts";
 import { withNWCClient, NWCNotConfiguredError } from "./_shared/nwc.ts";
-import { alertFailure } from "./_shared/alerts.ts";
 
-export default async (req: Request, context: Context) => {
+export default async (req: Request) => {
   const url = new URL(req.url);
   const paymentHash = url.searchParams.get('hash');
   const invoice = url.searchParams.get('invoice');

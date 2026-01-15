@@ -1,35 +1,30 @@
 /**
- * LNURL Callback Handler - Generates Lightning Invoices
- * 
- * Handles invoice generation for V4V payments.
- * - If `nostr` param present: forwards to Alby for zap receipt handling
- * - Otherwise: generates invoice locally via NWC with essay tracking
- * 
+ * LNURL-pay Callback Endpoint (Edge Function)
+ *
+ * Handles invoice generation requests from Lightning wallets.
+ * - Zap requests (with nostr param): forwards to Alby for zap receipt handling
+ * - Regular payments: generates invoice locally via NWC for essay tracking
+ *
  * Environment variables:
  * - NWC_CONNECTION_STRING: Your NWC connection URL (required)
+ * - ALBY_USERNAME: Your Alby username (required for zap forwarding)
  * - V4V_SITE_URL: Your site domain without protocol (required)
- * - ALBY_USERNAME: Your Alby username (required for zaps)
+ * - NTFY_TOPIC: Your ntfy.sh topic name (optional, for failure alerts)
  */
 
-import type { Context, Config } from "@netlify/functions";
+import type { Config } from "@netlify/edge-functions";
 import bolt11 from "bolt11";
-import { errorResponse, jsonResponse } from "./_shared/responses.ts";
+import { errorResponse, jsonResponse, alertFailure, ALBY_CALLBACK, ALBY_TIMEOUT_MS } from "./_shared/config.ts";
 import { withNWCClient, NWCNotConfiguredError } from "./_shared/nwc.ts";
-import { ALBY_CALLBACK, ALBY_TIMEOUT_MS } from "./_shared/config.ts";
-import { alertFailure } from "./_shared/alerts.ts";
 
-export default async (req: Request, context: Context) => {
+export default async (req: Request) => {
   const url = new URL(req.url);
   const amount = url.searchParams.get('amount');
   const nostrParam = url.searchParams.get('nostr');
   const essaySlug = url.searchParams.get('essay') || '';
   const essayTitle = url.searchParams.get('title') || '';
 
-  const siteUrl = Netlify.env.get("V4V_SITE_URL");
-  if (!siteUrl) {
-    console.error("V4V_SITE_URL not configured");
-    return errorResponse(500, "Server configuration error");
-  }
+  const siteUrl = Deno.env.get("V4V_SITE_URL") || "";
 
   if (!amount) {
     return errorResponse(400, "Amount parameter required");
@@ -40,12 +35,10 @@ export default async (req: Request, context: Context) => {
   if (nostrParam) {
     console.log(`Zap request detected, forwarding to Alby: amount=${amount}ms`);
 
-    // Build Alby callback URL with all relevant params
     const albyUrl = new URL(ALBY_CALLBACK);
     albyUrl.searchParams.set('amount', amount);
     albyUrl.searchParams.set('nostr', nostrParam);
 
-    // Forward optional LNURL params if present
     const comment = url.searchParams.get('comment');
     if (comment) albyUrl.searchParams.set('comment', comment);
 
@@ -85,10 +78,10 @@ export default async (req: Request, context: Context) => {
     const result = await withNWCClient(async (client) => {
       const memo = essaySlug
         ? `${siteUrl}/${essaySlug}`
-        : siteUrl;
+        : siteUrl || 'V4V payment';
 
       const invoice = await client.makeInvoice({
-        amount: parseInt(amount), // Amount is already in millisats from LNURL
+        amount: parseInt(amount),
         description: memo
       });
 
@@ -96,13 +89,13 @@ export default async (req: Request, context: Context) => {
       let paymentHash = '';
       try {
         const decoded = bolt11.decode(invoice.invoice);
-        const paymentHashTag = decoded.tags.find((t: any) => t.tagName === 'payment_hash');
-        paymentHash = paymentHashTag?.data || '';
+        const paymentHashTag = decoded.tags.find((t: { tagName: string }) => t.tagName === 'payment_hash');
+        paymentHash = (paymentHashTag?.data as string) || '';
       } catch (e) {
         console.error('Failed to decode BOLT11:', e);
       }
 
-      console.log(`Invoice generated: source=${essaySlug || 'general'}, amount=${amount}ms, hash=${paymentHash}`);
+      console.log(`Invoice generated: source=${essaySlug || 'footer'}, amount=${amount}ms, hash=${paymentHash}`);
 
       return { invoice: invoice.invoice, paymentHash };
     });
@@ -114,7 +107,7 @@ export default async (req: Request, context: Context) => {
       successAction: {
         tag: "message",
         message: essayTitle
-          ? `Thank you for supporting "${essayTitle}".`
+          ? `Thank you for supporting ${essayTitle}.`
           : 'Thank you for your support.'
       }
     });
@@ -129,7 +122,7 @@ export default async (req: Request, context: Context) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('NWC invoice generation error:', errorMessage, error);
     await alertFailure('Invoice Generation', errorMessage, {
-      source: essaySlug || 'general',
+      source: essaySlug || 'footer',
       amount
     });
     return errorResponse(500, `Invoice generation failed: ${errorMessage}`);

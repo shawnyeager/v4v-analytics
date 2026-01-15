@@ -106,7 +106,7 @@ Colored output respects the `NO_COLOR` environment variable.
 
 Accept V4V payments on your Hugo site deployed to Netlify. This repo includes:
 
-- **Netlify proxy** - LNURL-pay edge function + serverless functions for invoice generation
+- **Netlify proxy** - LNURL-pay edge functions for discovery, invoice generation, and status polling
 - **Hugo template** - Payment page with amount selection and QR codes
 - **Theme-agnostic CSS** - Customizable via CSS variables
 
@@ -115,7 +115,7 @@ Accept V4V payments on your Hugo site deployed to Netlify. This repo includes:
 cp -r proxy/netlify/* your-site/netlify/
 cp -r hugo/layouts/v4v your-site/layouts/
 cp hugo/assets/css/v4v.css your-site/assets/css/
-npm install @getalby/sdk bolt11 ws
+npm install @getalby/sdk bolt11
 ```
 
 See [docs/HUGO_SETUP.md](docs/HUGO_SETUP.md) for complete setup instructions.

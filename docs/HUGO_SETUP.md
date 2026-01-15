@@ -13,7 +13,7 @@ cp hugo/assets/css/v4v.css your-site/assets/css/
 
 # 2. Install dependencies
 cd your-site
-npm install @getalby/sdk bolt11 ws
+npm install @getalby/sdk bolt11
 
 # 3. Set env vars in Netlify Dashboard:
 #    - NWC_CONNECTION_STRING (from Alby)
@@ -27,7 +27,7 @@ npm install @getalby/sdk bolt11 ws
 
 ## What's Included
 
-- **Netlify Edge/Serverless Functions**: LNURL-pay proxy that connects to your Alby wallet
+- **Netlify Edge Functions**: LNURL-pay proxy with discovery, invoice generation, and status polling
 - **Hugo Layout**: Payment page template with amount selection and QR codes
 - **CSS**: Theme-agnostic styles with customizable CSS variables
 
@@ -52,17 +52,13 @@ Your site structure should look like:
 ```
 your-hugo-site/
 ├── netlify/
-│   ├── edge-functions/
-│   │   ├── lnurlp.ts
-│   │   └── _shared/config.ts
-│   └── functions/
-│       ├── lnurl-callback.mts
-│       ├── invoice-status.mts
+│   └── edge-functions/
+│       ├── lnurlp.ts
+│       ├── lnurl-callback.ts
+│       ├── invoice-status.ts
 │       └── _shared/
 │           ├── config.ts
-│           ├── nwc.ts
-│           ├── responses.ts
-│           └── alerts.ts
+│           └── nwc.ts
 ├── layouts/
 ├── content/
 └── ...
@@ -108,27 +104,20 @@ Add these routes to your `netlify.toml`:
   publish = "public"
   command = "hugo --minify"
 
-# Node.js runtime for serverless functions
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# LNURL-pay endpoint (edge function for low latency)
+# LNURL-pay discovery endpoint
 [[edge_functions]]
   path = "/.well-known/lnurlp/*"
   function = "lnurlp"
 
-# Invoice callback (serverless function - needs NWC)
-[[redirects]]
-  from = "/lnurl-callback"
-  to = "/.netlify/functions/lnurl-callback"
-  status = 200
+# Invoice generation callback
+[[edge_functions]]
+  path = "/lnurl-callback"
+  function = "lnurl-callback"
 
 # Invoice status polling
-[[redirects]]
-  from = "/invoice-status"
-  to = "/.netlify/functions/invoice-status"
-  status = 200
+[[edge_functions]]
+  path = "/invoice-status"
+  function = "invoice-status"
 ```
 
 **Note:** The edge functions directory defaults to `netlify/edge-functions/`. If you placed yours elsewhere, add:
@@ -144,8 +133,10 @@ In your Hugo site root, install the required packages:
 
 ```bash
 npm init -y  # if you don't have a package.json
-npm install @getalby/sdk bolt11 ws
+npm install @getalby/sdk bolt11
 ```
+
+**Note:** Edge functions run on Deno with native WebSocket support, so `ws` is not needed.
 
 ### 6. Set Environment Variables
 
@@ -249,10 +240,10 @@ The proxy uses your Alby wallet's limits. These are fetched automatically from A
 ## How It Works
 
 1. **User visits** `/v4v/` and selects an amount
-2. **Edge function** returns LNURL-pay metadata at `/.well-known/lnurlp/sats`
-3. **Serverless function** generates invoice via NWC when amount is confirmed
+2. **Edge function** (`lnurlp`) returns LNURL-pay metadata at `/.well-known/lnurlp/sats`
+3. **Edge function** (`lnurl-callback`) generates invoice via NWC when amount is confirmed
 4. **QR code** displays, user pays with Lightning wallet
-5. **Polling function** checks payment status every 3 seconds
+5. **Edge function** (`invoice-status`) checks payment status every 3 seconds
 6. **Confirmation** shows when payment is received
 
 ## Troubleshooting
@@ -262,14 +253,14 @@ The proxy uses your Alby wallet's limits. These are fetched automatically from A
 - Check that `NWC_CONNECTION_STRING` is set correctly in Netlify
 - Check that `ALBY_USERNAME` is set (just the username, not the full email)
 - Verify your Alby wallet has receiving capacity
-- Check Netlify function logs for detailed error messages
+- Check Netlify Edge Functions logs for detailed error messages
 
 ### "Cannot find module" errors in function logs
 
 You need to install dependencies in your Hugo site:
 
 ```bash
-npm install @getalby/sdk bolt11 ws
+npm install @getalby/sdk bolt11
 ```
 
 ### QR code not generating
