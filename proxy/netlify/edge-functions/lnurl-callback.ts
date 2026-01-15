@@ -14,7 +14,7 @@
 
 import type { Config } from "@netlify/edge-functions";
 import bolt11 from "bolt11";
-import { errorResponse, jsonResponse, alertFailure, ALBY_CALLBACK, ALBY_TIMEOUT_MS } from "./_shared/config.ts";
+import { errorResponse, jsonResponse, alertFailure, siteUrl, ALBY_CALLBACK, ALBY_TIMEOUT_MS } from "./_shared/config.ts";
 import { withNWCClient, NWCNotConfiguredError } from "./_shared/nwc.ts";
 
 export default async (req: Request) => {
@@ -23,8 +23,6 @@ export default async (req: Request) => {
   const nostrParam = url.searchParams.get('nostr');
   const essaySlug = url.searchParams.get('essay') || '';
   const essayTitle = url.searchParams.get('title') || '';
-
-  const siteUrl = Deno.env.get("V4V_SITE_URL") || "";
 
   if (!amount) {
     return errorResponse(400, "Amount parameter required");

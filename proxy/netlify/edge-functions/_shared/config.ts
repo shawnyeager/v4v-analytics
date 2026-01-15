@@ -1,22 +1,23 @@
 /**
  * Shared configuration constants for edge functions
  *
- * Environment variables:
+ * Environment variables (set in Netlify UI):
  * - ALBY_USERNAME: Your Alby username (required)
- * - V4V_SITE_URL: Your site domain without protocol (required for alerts)
+ * - V4V_SITE_URL: Your site domain without protocol (required)
+ * - VALID_USERNAMES: Comma-separated Lightning address aliases (e.g., "sats,zap,lightning")
  * - NTFY_TOPIC: Your ntfy.sh topic name (optional, for failure alerts)
  */
 
-// Get Alby username from environment (set in Netlify UI)
 const albyUsername = Deno.env.get("ALBY_USERNAME") || "";
+export const siteUrl = Deno.env.get("V4V_SITE_URL") || "";
 
 export const ALBY_LNURL = `https://getalby.com/.well-known/lnurlp/${albyUsername}`;
 export const ALBY_CALLBACK = `https://getalby.com/lnurlp/${albyUsername}/callback`;
 export const ALBY_TIMEOUT_MS = 10000;
 
-// Lightning address aliases that map to your Alby account
-// Users can configure these based on their domain
-export const VALID_USERNAMES = ["sats", "zap", "lightning"] as const;
+// Lightning address aliases parsed from env var
+const usernamesEnv = Deno.env.get("VALID_USERNAMES") || "sats";
+export const VALID_USERNAMES = usernamesEnv.split(",").map(s => s.trim());
 
 export function errorResponse(status: number, reason: string): Response {
   return new Response(JSON.stringify({ status: "ERROR", reason }), {
@@ -46,8 +47,6 @@ export async function alertFailure(
   const topic = Deno.env.get("NTFY_TOPIC");
   if (!topic) return;
 
-  const siteUrl = Deno.env.get("V4V_SITE_URL") || "V4V";
-
   const body = [
     `V4V Failure: ${context}`,
     `Error: ${error}`,
@@ -57,7 +56,7 @@ export async function alertFailure(
   try {
     await fetch(`https://ntfy.sh/${topic}`, {
       method: 'POST',
-      headers: { 'Title': `${siteUrl} V4V Alert` },
+      headers: { 'Title': `${siteUrl || 'V4V'} Alert` },
       body
     });
   } catch (e) {
